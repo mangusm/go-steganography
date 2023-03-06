@@ -64,8 +64,8 @@ func load(filePath string) *image.YCbCr {
 func save(filePath string, img *image.YCbCr) {
 
 	message := "Super secret message"
-	lenHeader := len(message)
-	fmt.Printf("%08b\n", lenHeader)
+	lenHeader := fmt.Sprintf("%08b", len(message))
+	fmt.Println(lenHeader)
 	messageBin := binary(message)
 	fmt.Println(messageBin)
 	fmt.Println(binToString([]byte(messageBin)))
