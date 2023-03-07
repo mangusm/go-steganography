@@ -13,6 +13,14 @@ import (
 	"strings"
 )
 
+// Min returns the smaller of x or y.
+func Min(x, y int) int {
+	if x > y {
+		return y
+	}
+	return x
+}
+
 func binary(s string) string {
 	res := ""
 	for _, c := range s {
@@ -63,12 +71,9 @@ func load(filePath string) *image.YCbCr {
 
 func save(filePath string, img *image.YCbCr) {
 
-	message := "Super secret message"
-	lenHeader := fmt.Sprintf("%08b", len(message))
-	fmt.Println(lenHeader)
+	message := "Super secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret messageSuper secret message"
+	lenHeader := fmt.Sprintf("%063b", uint64(len(message)))
 	messageBin := binary(message)
-	fmt.Println(messageBin)
-	fmt.Println(binToString([]byte(messageBin)))
 
 	imgFile, err := os.Create("OUT_" + filePath)
 	pxY := []uint8{}
@@ -86,11 +91,66 @@ func save(filePath string, img *image.YCbCr) {
 	// 2. Read the LSB of the next {lenHeader} color values
 	// 3. Convert the result back to a string using binToString
 
-	for i := 0; i < len(img.Y); i++ {
-		pxY = append(pxY, img.Y[i]+127)
-		pxCb = append(pxCb, img.Cb[i]+127)
-		pxCr = append(pxCr, img.Cr[i]+127)
+	offset := 0
+	for i := 0; i < len(lenHeader); i += 3 {
+		digitsToWrite := lenHeader[i:]
+
+		if img.Y[i]%2 != uint8(digitsToWrite[0])%2 {
+			pxY = append(pxY, img.Y[i]+1)
+		} else {
+			pxY = append(pxY, img.Y[i])
+		}
+
+		if img.Cb[i]%2 != uint8(digitsToWrite[1])%2 {
+			pxCb = append(pxCb, img.Cb[i]+1)
+		} else {
+			pxCb = append(pxCb, img.Cb[i])
+		}
+
+		if img.Cr[i]%2 != uint8(digitsToWrite[2])%2 {
+			pxCr = append(pxCr, img.Cr[i]+1)
+		} else {
+			pxCr = append(pxCr, img.Cr[i])
+		}
+		offset += 3
 	}
+
+	for i := 0; i < len(messageBin); i += 3 {
+		digitsToWrite := messageBin[i:Min(i+3, len(messageBin))]
+
+		if len(digitsToWrite) >= 1 {
+			if img.Y[i+offset]%2 != uint8(digitsToWrite[0])%2 {
+				pxY = append(pxY, img.Y[i]+1)
+			} else {
+				pxY = append(pxY, img.Y[i])
+			}
+		}
+
+		if len(digitsToWrite) >= 2 {
+
+			if img.Cb[i+offset]%2 != uint8(digitsToWrite[1])%2 {
+				pxCb = append(pxCb, img.Cb[i]+1)
+			} else {
+				pxCb = append(pxCb, img.Cb[i])
+			}
+		}
+
+		if len(digitsToWrite) >= 3 {
+			if img.Cr[i+offset]%2 != uint8(digitsToWrite[2])%2 {
+				pxCr = append(pxCr, img.Cr[i]+1)
+			} else {
+				pxCr = append(pxCr, img.Cr[i])
+			}
+		}
+		offset += 3
+	}
+
+	for i := offset; i < len(img.Y); i++ {
+		pxY = append(pxY, img.Y[i])
+		pxCb = append(pxCb, img.Cb[i])
+		pxCr = append(pxCr, img.Cr[i])
+	}
+	fmt.Println(len(img.Y) - len(pxY))
 	created := image.YCbCr{
 		Y:              pxY,
 		Cb:             pxCb,
